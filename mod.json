@@ -1,0 +1,8 @@
+{
+  "id": "cosmeticsMod",
+  "name": "Cosmetics Mod",
+  "version": "1.0.0",
+  "entry": "main.gd",
+  "priority": 0,
+  "requires": []
+}

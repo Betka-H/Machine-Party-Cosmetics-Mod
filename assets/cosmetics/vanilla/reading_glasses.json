@@ -1,0 +1,22 @@
+{
+	"type": "glasses",
+	"display_name": "Reading Glasses",
+	"gibberish_name": "0010047",
+	"transform_values": {
+		"position": [
+			0.0,
+			0.0,
+			0.0
+		],
+		"rotation_degrees": [
+			0.0,
+			0.0,
+			0.0
+		],
+		"scale": [
+			1.0,
+			1.0,
+			1.0
+		]
+	}
+}

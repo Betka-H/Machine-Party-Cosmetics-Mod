@@ -1,0 +1,22 @@
+{
+	"type": "hat",
+	"display_name": "Purple Cone",
+	"gibberish_name": "0020049",
+	"transform_values": {
+		"position": [
+			0.0,
+			-0.5,
+			0.0
+		],
+		"rotation_degrees": [
+			0.0,
+			0.0,
+			50.0
+		],
+		"scale": [
+			1.0,
+			0.5,
+			1.0
+		]
+	}
+}

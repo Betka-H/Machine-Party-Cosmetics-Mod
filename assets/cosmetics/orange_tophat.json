@@ -1,0 +1,22 @@
+{
+	"type": "hat",
+	"display_name": "Orange Tophat",
+	"gibberish_name": "0020048",
+	"transform_values": {
+		"position": [
+			0.0,
+			0.0,
+			0.0
+		],
+		"rotation_degrees": [
+			0.0,
+			0.0,
+			0.0
+		],
+		"scale": [
+			1.0,
+			1.0,
+			1.0
+		]
+	}
+}
