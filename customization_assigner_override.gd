@@ -7,10 +7,8 @@ var custom_cosmetics: Array[Dictionary] = []
 var _valid_cosmetic_types: Array[String] = ["hat", "glasses"]
 
 
-func _ready() -> void:
-	# refresh first so that the new cosmetics are added to the bones before attempting to assign them
-	refresh_custom_cosmetics()
-	super._ready()
+func _full_loader_path(local_path: String) -> String:
+	return ModLoader.dir_of(MOD_ID).path_join(local_path)
 
 
 func print_custom_cosmetics() -> void:
@@ -25,7 +23,20 @@ func print_custom_cosmetics() -> void:
 	)
 
 
-func refresh_custom_cosmetics() -> void:
+func _ready() -> void:
+	# refresh first so that the new cosmetics are added to the bones before attempting to assign them
+	refresh_custom_cosmetics_on_head_bones()
+	super._ready()
+
+
+"""
+
+adding models ingame
+
+"""
+
+
+func refresh_custom_cosmetics_on_head_bones() -> void:
 	custom_cosmetics = _discover_cosmetics()
 
 	for cosmetic in custom_cosmetics:
@@ -40,91 +51,46 @@ func refresh_custom_cosmetics() -> void:
 				push_warning("no bone")
 				continue
 
-		add_cosmetic_to_bone(cosmetic, target_bone)
+		add_cosmetic_to_node3d(cosmetic, target_bone)
 
 	print_custom_cosmetics()
 
 
-func add_cosmetic_to_bone(cosmetic_dictionary: Dictionary, target_bone: Node3D) -> void:
+func add_cosmetic_to_node3d(cosmetic_dictionary: Dictionary, parent_node: Node3D) -> void:
+	print(parent_node.name)
 	# don't add duplicates
-	if target_bone.has_node(NodePath(cosmetic_dictionary.id)):
+	if parent_node.has_node(NodePath(cosmetic_dictionary.id)):
 		return
 
-	var model: Node3D = _load_glb_model(cosmetic_dictionary["absolute_model_path"])
+	var model: Node3D = _generate_glb_model_scene(cosmetic_dictionary["absolute_model_path"])
 	if model == null:
-		push_warning("no model found for " + cosmetic_dictionary.id)
 		return
 
 	model.name = cosmetic_dictionary.id
-	_apply_node3d_transform(model, cosmetic_dictionary.transform_values, true)
-	target_bone.add_child(model)
+	_apply_node3d_transform(model, cosmetic_dictionary["transform_values"], true)
+	parent_node.add_child(model)
 	model.visible = false
 
-	print("added cosmetic " + cosmetic_dictionary.id + " to bone " + target_bone)
+	print("added cosmetic " + cosmetic_dictionary.id + " to parent " + parent_node.name)
 
 
-func _equip_currently_selected():
-	assign_hat(Globals.active_cosmetic_hat)
-	assign_glasses(Globals.active_cosmetic_glasses)
-
-
-func assign_hat(name: String):
-	super.assign_hat(name)
-	print("assigning cosmetic hat: " + name)
-
-
-func remove_hat():
-	super.remove_hat()
-	print("removing hat")
-
-
-func assign_glasses(name: String):
-	super.assign_glasses(name)
-	print("assigning cosmetic glasses: " + name)
-
-
-func remove_glasses():
-	super.remove_glasses()
-	print("removing glasses")
-
-
-# for the hat preview grid
-func add_custom_model(parent: Node3D, cosmetic, make_visible: bool = false) -> Node3D:
-	# Reuse an existing model if it has already been added.
-	var existing_model := parent.get_node_or_null(NodePath(str(cosmetic.id)))
-
-	if existing_model is Node3D:
-		existing_model.visible = make_visible
-		return existing_model
-
-	# Load the model if it doesn't exist yet.
-	var model: Node3D = _load_glb_model(cosmetic.absolute_model_path)
-
-	if model == null:
-		return null
-
-	model.name = cosmetic.id
-	# apply_cosmetic_transform(model, cosmetic)
-	parent.add_child(model)
-	model.visible = make_visible
-
-	return model
-
-
-func _load_glb_model(absolute_model_path: String) -> Node3D:
+func _generate_glb_model_scene(absolute_model_path: String) -> Node3D:
 	var document := GLTFDocument.new()
 	var state := GLTFState.new()
 
 	var error := document.append_from_file(absolute_model_path, state)
 	if error != OK:
-		push_warning("could not load: " + absolute_model_path)
+		push_warning("could not load model: " + absolute_model_path)
 		return null
 
 	return document.generate_scene(state)
 
 
-func _path_in_mod(local_path: String) -> String:
-	return ModLoader.dir_of(MOD_ID).path_join(local_path)
+"""
+
+cosmetics discovery
+
+"""
 
 
 # dictionary array of cosmetics found in the assets/cosmetics directory and its subdirectories
@@ -144,7 +110,7 @@ func _discover_cosmetics() -> Array[Dictionary]:
 	# "absolute_json_path": the json's full path from the root of the mod
 	# "relative_json_path": the json's path from the assets/cosmetics root
 	# "depth": how many folders deep is the json
-	var collected_jsons := _collect_cosmetic_jsons(_path_in_mod("assets/cosmetics"))
+	var collected_jsons := _collect_cosmetic_jsons(_full_loader_path("assets/cosmetics"))
 
 	# sort the collected_jsons by depth, then path, so shallower cosmetics take priority
 	collected_jsons.sort_custom(
@@ -275,6 +241,13 @@ func _collect_cosmetic_jsons(dir_to_search: String, relative_json_path: String =
 	return found_json_files
 
 
+"""
+
+applying node3d transforms
+
+"""
+
+
 # set a Node3D's transform values (position, rotation, scale)
 # "absolute" specifies how to set the object's transform
 # - true: set the object's transform directly to the new values
@@ -359,3 +332,30 @@ func _get_vector3(transform_values: Variant, default_transform: Vector3) -> Vect
 		result[i] = transform_values[i]
 
 	return Vector3(result[0], result[1], result[2])
+
+
+"""
+
+cosmetic assign/remove functions
+
+"""
+
+
+func assign_hat(name: String):
+	super.assign_hat(name)
+	print("assigning cosmetic hat: " + name)
+
+
+func remove_hat():
+	super.remove_hat()
+	print("removing hat")
+
+
+func assign_glasses(name: String):
+	super.assign_glasses(name)
+	print("assigning cosmetic glasses: " + name)
+
+
+func remove_glasses():
+	super.remove_glasses()
+	print("removing glasses")
