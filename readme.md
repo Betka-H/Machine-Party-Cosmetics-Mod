@@ -107,5 +107,4 @@ TODO: implement cosmetic transform editor
 TODO: add in-game debug messages for cosmetics errors
 TODO: fix online lobby cosmetics bug
 TODO: fix local lobby being unplayable
-TODO: fix hot-reloading cosmetics inside the cosmetics menu
-TODO: allow the vanilla rubiks_cube hat to be set from the cosmetics menu
+TODO: add "author" field to cosmetic json
