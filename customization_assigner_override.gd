@@ -1,7 +1,6 @@
 extends "res://scripts/components/character customization/customization_assigner.gd"
 
 const MOD_ID := "cosmeticsMod"
-const REFRESH_CUSTOM_COSMETICS_KEY := KEY_R
 
 var custom_cosmetics: Array[Dictionary] = []
 var _valid_cosmetic_types: Array[String] = ["hat", "glasses"]
@@ -34,10 +33,16 @@ func _ready() -> void:
 adding models ingame
 
 """
+# used for removing cosmetics that are no longer present in the files
+var old_cosmetics: Array[Dictionary] = []
 
 
 func refresh_custom_cosmetics_on_head_bones() -> void:
+	old_cosmetics = custom_cosmetics.duplicate(true)
 	custom_cosmetics = _discover_cosmetics()
+
+	remove_outdated_cosmetics(bone_attachment_hat)
+	remove_outdated_cosmetics(bone_attachment_glasses)
 
 	for cosmetic in custom_cosmetics:
 		var target_bone: Node3D
@@ -56,10 +61,40 @@ func refresh_custom_cosmetics_on_head_bones() -> void:
 	print_custom_cosmetics()
 
 
+func remove_outdated_cosmetics(parent_node: Node3D) -> void:
+	for child in parent_node.get_children():
+		if (child is not Node3D):
+			continue
+
+		var was_custom_cosmetic := false
+		for old_cosmetic in old_cosmetics:
+			if (old_cosmetic.id == child.name):
+				was_custom_cosmetic = true
+				break
+		if (!was_custom_cosmetic):
+			continue
+
+		var is_custom_cosmetic := false
+		for cosmetic in custom_cosmetics:
+			if (cosmetic.id == child.name):
+				is_custom_cosmetic = true
+				break
+
+		if (!is_custom_cosmetic):
+			if (Globals.active_cosmetic_hat == child.name):
+				Globals.active_cosmetic_hat = ""
+
+			if (Globals.active_cosmetic_glasses == child.name):
+				Globals.active_cosmetic_glasses = ""
+
+			child.queue_free()
+			print("removed outdated cosmetic: " + child.name)
+
+
 func add_cosmetic_to_node3d(cosmetic_dictionary: Dictionary, parent_node: Node3D) -> void:
-	print(parent_node.name)
-	# don't add duplicates
+	# don't add duplicates, but update the transform on reload
 	if parent_node.has_node(NodePath(cosmetic_dictionary.id)):
+		_apply_node3d_transform(parent_node.get_node(NodePath(cosmetic_dictionary.id)), cosmetic_dictionary["transform_values"], true)
 		return
 
 	var model: Node3D = _generate_glb_model_scene(cosmetic_dictionary["absolute_model_path"])
@@ -71,7 +106,7 @@ func add_cosmetic_to_node3d(cosmetic_dictionary: Dictionary, parent_node: Node3D
 	parent_node.add_child(model)
 	model.visible = false
 
-	print("added cosmetic " + cosmetic_dictionary.id + " to parent " + parent_node.name)
+	# print("added cosmetic " + cosmetic_dictionary.id + " to parent " + parent_node.name)
 
 
 func _generate_glb_model_scene(absolute_model_path: String) -> Node3D:
