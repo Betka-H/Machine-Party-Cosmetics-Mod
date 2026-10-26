@@ -1,0 +1,19 @@
+{
+	"type": "hat",
+	"display_name": "Tenna",
+	"gibberish_name": "IT'S TV TIME!",
+	"compatible_with_glasses": false,
+	"transform_values": {
+		"position": [
+			0.0,
+			-0.35,
+			0.0
+		],
+		"rotation_degrees": [
+			0.0,
+			-90,
+			0
+		],
+		"scale": 0.3
+	}
+}
