@@ -22,8 +22,8 @@ this mod is made to work with the following modloader, which you will need to ge
 to add a custom cosmetic into the game, put the model (.glb format) and a .json describing the cosmetic into the cosmetics folder (cosmeticsMod/assets/cosmetics)
 
 .json example:
-cool_hat.json:
 ```json
+cool_hat.json:
 {
 	"type": "hat",
 	"display_name": "Very Cool Hat",
@@ -50,19 +50,24 @@ cool_hat.json:
 ```
 
 cool_hat:
-- internal id of the cosmetic<br>
+- internal id of the cosmetic
+
 "type" (string):
-- can be either "hat" or "glasses"<br>
+- can be either "hat" or "glasses"
+
 "display_name" (string):
-- for displaying the name of the cosmetic in menus and stuff instead of the id<br>
+- for displaying the name of the cosmetic in menus and stuff instead of the id
+
 "gibberish_name" (string):
-- displayed in the cosmetic selection menu when you hover/select the cosmetic<br>
+- displayed in the cosmetic selection menu when you hover/select the cosmetic
 	- *00200xx is my suggested custom cosmetic gibberish naming convention, but you can make it any string you like. just bear in mind the location it is displayed in.*
-"compatible_with_glasses" (bool):<br>
-- self explanatory<br>
+
+"compatible_with_glasses" (bool):
+- self explanatory
+
 "transform_values":
-- self explanatory. these get applied directly to the model ingame.<br>
-- can contain "position", "rotation_degrees" and "scale". these can be either a single number (int or float) (for example - "scale": 1) or an array of up to 3 numbers, corresponding to the x, y and z coordinates of the transform.<br>
+- self explanatory. these get applied directly to the model ingame.
+- can contain "position", "rotation_degrees" and "scale". these can be either a single number (int or float) (for example - "scale": 1) or an array of up to 3 numbers, corresponding to the x, y and z coordinates of the transform.
 	- *(not yet implemented) you can use the editor in the cosmetics menu to adjust the cosmetic's transform values*
 
 the .json can be missing any of the fields. this will result in default values being assigned for the missing fields:
@@ -77,20 +82,22 @@ the .json can be missing any of the fields. this will result in default values b
 
 the mod will also search for cosmetics in folders within the root cosmetics folder. the folder path to the cosmetic will be appended before the cosmetic's id to avoid common duplicate ids.
 
-example setup:<br>
-cosmeticsMod/assets/cosmetics/<br>
-├── cool_hat.json<br>
-├── cool_hat.glb<br>
-├── cool/<br>
-│   ├── hat.json<br>
-│   └── hat.glb<br>
-├── epic/<br>
-│   ├── hat.json<br>
-│   └── hat.glb<br>
-└── hats/<br>
-.   └── silly/<br>
-.       ├── banana.json<br>
-.       └── banana.glb<br>
+example setup:
+```text
+cosmeticsMod/assets/cosmetics/
+├── cool_hat.json
+├── cool_hat.glb
+├── cool/
+│   ├── hat.json
+│   └── hat.glb
+├── epic/
+│   ├── hat.json
+│   └── hat.glb
+└── hats/
+    └── silly/
+        ├── banana.json
+        └── banana.glb
+```
 
 this would result in cosmetics:
 - cool_hat (from cosmetics root)
