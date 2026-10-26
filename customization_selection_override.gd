@@ -3,8 +3,12 @@ extends "res://scripts/components/character customization/customization_selectio
 const MOD_ID := "cosmeticsMod"
 
 const REFRESH_CUSTOM_COSMETICS_KEY := KEY_R
+const PAGE_HOME_KEY := KEY_W
 const PAGE_UP_KEY := KEY_E
 const PAGE_DOWN_KEY := KEY_Q
+
+var current_page := 1
+var total_pages := 1
 
 const VANILLA_COSMETICS: Array[String] = [
 	"beer_hat",
@@ -18,209 +22,223 @@ const VANILLA_COSMETICS: Array[String] = [
 	"hard_hat",
 ]
 
-var current_page := 0
-var total_pages := 1
+enum NavigationDirection {
+	HOME,
+	UP,
+	DOWN,
+	REFRESH_CURRENT,
+}
 
 
 func _ready() -> void:
 	super._ready()
-	print("\ncustomization selection override script ready")
+	print("\ncustomization selection override active")
+	customization_hovered("") # sets the "KL_RUID" to be "--" when first entering the cosmetics menu
+	refresh_cosmetics_grid(NavigationDirection.HOME)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if (event is InputEventKey && event.pressed && !event.echo):
-		#print(OS.get_keycode_string(event.keycode) + " is pressed")
+		if (event.keycode == PAGE_HOME_KEY):
+			refresh_cosmetics_grid(NavigationDirection.HOME)
 		if (event.keycode == PAGE_UP_KEY):
-			refresh_cosmetics_grid(true)
+			refresh_cosmetics_grid(NavigationDirection.UP)
 		if (event.keycode == PAGE_DOWN_KEY):
-			refresh_cosmetics_grid(false)
+			refresh_cosmetics_grid(NavigationDirection.DOWN)
 		if (event.keycode == REFRESH_CUSTOM_COSMETICS_KEY):
-			customization_assigner.refresh_custom_cosmetics()
-			customization_assigner.print_custom_cosmetics()
-			_restore_vanilla_grid()
+			customization_assigner.refresh_custom_cosmetics_on_head_bones()
+			refresh_cosmetics_grid(NavigationDirection.REFRESH_CURRENT)
 
 		# get_viewport().set_input_as_handled()
 		return
 
 
-func refresh_cosmetics_grid(up: bool) -> void:
-	# Page 0 is the vanilla page; remaining pages contain custom cosmetics.
-	total_pages = 1 + ceili(customization_assigner.custom_cosmetics.size() / 9.0)
+"""
 
-	if up:
-		current_page += 1
-		if current_page >= total_pages:
-			current_page = 0
-	else:
-		current_page -= 1
-		if current_page < 0:
-			current_page = total_pages - 1
+the cosmetics grid + page navigation
+
+"""
+
+
+func refresh_cosmetics_grid(direction: NavigationDirection) -> void:
+	var grid_items: Array = customization_assigner.custom_cosmetics.duplicate()
+	grid_items.append({ "id": "rubiks_cube", "type": "hat" })
+
+	# page 1 is vanilla, other pages are custom + rubiks
+	total_pages = 1 + ceili(grid_items.size() / 9.0)
+
+	match direction:
+		NavigationDirection.HOME:
+			current_page = 1
+		NavigationDirection.UP:
+			current_page += 1
+			if current_page > total_pages:
+				current_page = 1
+		NavigationDirection.DOWN:
+			current_page -= 1
+			if current_page < 1:
+				current_page = total_pages
+		NavigationDirection.REFRESH_CURRENT:
+			pass
+
+	# prevents the current page from being outside the valid range after a refresh (value, min, max)
+	current_page = clampi(current_page, 1, total_pages)
 
 	print("refreshing cosmetics grid, page ", current_page, "/", total_pages)
 
-	if current_page == 0:
-		_restore_vanilla_grid()
-		return
-
 	_clear_all_slots()
 
-	var start_index: int = (current_page - 1) * 9
+	if current_page == 1:
+		_restore_vanilla_grid()
+		print("items: vanilla")
+		return
 
-	var _debug_items: Array[String] = []
+	var start_index: int = (current_page - 2) * 9
+	var debug_items: Array[String] = []
+
 	for i in range(9):
 		var item_index: int = start_index + i
 
-		if item_index < customization_assigner.custom_cosmetics.size():
-			# print("placing item ", item_index)
-			_debug_items.append(customization_assigner.custom_cosmetics[item_index].id)
-			_assign_slot_item(i, customization_assigner.custom_cosmetics[item_index], false)
-	print("grid items: " + ", ".join(_debug_items))
+		if item_index < grid_items.size():
+			debug_items.append(grid_items[item_index].id)
+			_assign_slot_item(i, grid_items[item_index], false)
 
-
-func _restore_vanilla_grid() -> void:
-	print("restoring vanilla cosmetics grid")
-
-	for i in range(9):
-		_assign_slot_item(i, { "id": VANILLA_COSMETICS[i] }, true)
-
-
-func select_cosmetic(cosmetic_name: String) -> void:
-	var cosmetic_type := _get_cosmetic_type(cosmetic_name)
-
-	if cosmetic_type == "":
-		push_warning("Unknown cosmetic type: " + cosmetic_name)
-		return
-
-	# Clicking the currently equipped cosmetic toggles it off.
-	if cosmetic_type == "glasses":
-		if cosmetic_name == Globals.active_cosmetic_glasses:
-			customization_assigner.remove_glasses()
-			Globals.active_cosmetic_glasses = ""
-			return
-	elif cosmetic_type == "hat":
-		if cosmetic_name == Globals.active_cosmetic_hat:
-			customization_assigner.remove_hat()
-			Globals.active_cosmetic_hat = ""
-			return
-
-	# Equip the selected cosmetic.
-	if cosmetic_type == "glasses":
-		if not is_compatible_with_glasses(Globals.active_cosmetic_hat):
-			customization_assigner.remove_hat()
-			Globals.active_cosmetic_hat = ""
-
-		customization_assigner.assign_glasses(cosmetic_name)
-		Globals.active_cosmetic_glasses = cosmetic_name
-
-	elif cosmetic_type == "hat":
-		customization_assigner.assign_hat(cosmetic_name)
-		Globals.active_cosmetic_hat = cosmetic_name
-
-		if not is_compatible_with_glasses(cosmetic_name):
-			customization_assigner.remove_glasses()
-			Globals.active_cosmetic_glasses = ""
-
-
-func is_compatible_with_glasses(cosmetic_name_to_check) -> bool:
-	if cosmetic_name_to_check == null:
-		return false
-
-	# Find custom cosmetic metadata first.
-	for cosmetic in customization_assigner.custom_cosmetics:
-		if cosmetic["id"] == cosmetic_name_to_check:
-			return bool(cosmetic.get("compatible_with_glasses", true))
-
-	# Preserve vanilla compatibility rules.
-	match cosmetic_name_to_check:
-		"":
-			return true
-		"beer_hat", "cap_blade", "sunglasses", "reading_glasses":
-			return true
-		"rubiks_cube", "maska_helmet":
-			return false
-		"tophat", "traffic_cone", "hard_hat", "drill_sgt_hat":
-			return true
-
-	# Unknown cosmetics default to compatible.
-	return true
-
-
-func _get_cosmetic_type(cosmetic_id: String) -> String:
-	# Look up custom cosmetics using their metadata.
-	for cosmetic in customization_assigner.custom_cosmetics:
-		if cosmetic["id"] == cosmetic_id:
-			return str(cosmetic.get("type", ""))
-
-	# Handle vanilla cosmetics.
-	if cosmetic_id in ["sunglasses", "reading_glasses"]:
-		return "glasses"
-
-	if cosmetic_id in ["beer_hat", "cap_blade", "tophat", "traffic_cone", "maska_helmet", "drill_sgt_hat", "hard_hat"]:
-		return "hat"
-
-	return ""
+	print("items: " + ", ".join(debug_items))
 
 
 func _clear_all_slots():
-	# print("clearing cosmetics grid")
 	for i in range(9):
 		selection_rect_array[i].get_parent().hide()
 
 
-func _assign_slot_item(slot: int, cosmetic: Dictionary, is_vanilla: bool):
-	"""if (cosmetic.id == ""):
-		print("emptying slot ", slot)
-	else:
-		print("assigning item " + cosmetic.id + " to slot ", slot)"""
-	var preview: Customization_SelectionInstance = cosmetic_selection_parent.get_child(slot)
-	if (is_vanilla):
-		preview.setup_cosmetic(VANILLA_COSMETICS[slot])
-	else:
-		customization_assigner.add_custom_model(preview.cosmetic_holder_parent, cosmetic)
-		preview.setup_cosmetic(cosmetic.id)
-	selection_rect_array[slot].texture = preview.assigned_viewport.get_texture()
-	selection_rect_array[slot].get_parent().show()
+func _restore_vanilla_grid() -> void:
+	for i in range(9):
+		_assign_slot_item(i, { "id": VANILLA_COSMETICS[i] }, true)
 
-	selection_rect_array[slot] \
+
+# assigns cosmetic to grid slot
+func _assign_slot_item(slot_index: int, cosmetic_dictionary: Dictionary, is_vanilla: bool):
+	var preview: Customization_SelectionInstance = cosmetic_selection_parent.get_child(slot_index)
+
+	# setup_cosmetic(): hides every but the selected model
+	# if vanilla, just give it the id
+	if (is_vanilla && slot_index < VANILLA_COSMETICS.size()):
+		preview.setup_cosmetic(VANILLA_COSMETICS[slot_index])
+	# if custom, add the 3d model to the slot first, then setup id
+	else:
+		customization_assigner.add_cosmetic_to_node3d(cosmetic_dictionary, preview.cosmetic_holder_parent)
+		preview.setup_cosmetic(cosmetic_dictionary.id)
+
+	# set up spinny model and slot visibility
+	selection_rect_array[slot_index].texture = preview.assigned_viewport.get_texture()
+	selection_rect_array[slot_index].get_parent().show()
+
+	# assign the id
+	selection_rect_array[slot_index] \
 			.get_parent() \
 			.get_node("customization selection branch") \
-			.assigned_cosmetic = cosmetic.id
+			.assigned_cosmetic = cosmetic_dictionary.id
 
 
-func get_gibberish_name(_str: String):
+"""
+
+selecting cosmetics
+
+"""
+
+
+# when pressing an item in the grid. equips/un-equips cosmetics, handles glasses compatibility
+func select_cosmetic(cosmetic_name: String) -> void:
+	var cosmetic_type := _get_cosmetic_type(cosmetic_name)
+
+	# de-selecting a cosmetic
+	match cosmetic_type:
+		"hat":
+			if cosmetic_name == Globals.active_cosmetic_hat:
+				deselect_hat()
+				return
+		"glasses":
+			if cosmetic_name == Globals.active_cosmetic_glasses:
+				deselect_glasses()
+				return
+
+	# equipping the selected cosmetic and handling glasses compatibility
+	match cosmetic_type:
+		"hat":
+			if (!is_compatible_with_glasses(cosmetic_name)):
+				deselect_glasses()
+
+			customization_assigner.assign_hat(cosmetic_name)
+			Globals.active_cosmetic_hat = cosmetic_name
+		"glasses":
+			if (!is_compatible_with_glasses(Globals.active_cosmetic_hat)):
+				deselect_hat()
+
+			customization_assigner.assign_glasses(cosmetic_name)
+			Globals.active_cosmetic_glasses = cosmetic_name
+
+
+func deselect_hat():
+	customization_assigner.remove_hat()
+	Globals.active_cosmetic_hat = ""
+
+
+func deselect_glasses():
+	customization_assigner.remove_glasses()
+	Globals.active_cosmetic_glasses = ""
+
+
+"""
+
+misc
+
+"""
+
+
+func is_compatible_with_glasses(cosmetic_name: String) -> bool:
+	# custom: get compatibility info from dictionary by name
 	for cosmetic in customization_assigner.custom_cosmetics:
-		if (cosmetic.id == _str):
+		if (cosmetic.id == cosmetic_name):
+			return cosmetic.compatible_with_glasses # is set when first discovering the cosmetic
+
+	# vanilla: replicate vanilla rules
+	match cosmetic_name:
+		"beer_hat", "cap_blade", "tophat", "traffic_cone", "hard_hat", "drill_sgt_hat", "sunglasses", "reading_glasses":
+			return true
+		"rubiks_cube", "maska_helmet":
+			return false
+		"":
+			return true
+
+	# always remember, True...
+	return true
+
+
+func _get_cosmetic_type(cosmetic_id: String) -> String:
+	# custom cosmetics
+	for cosmetic in customization_assigner.custom_cosmetics:
+		if (cosmetic.id == cosmetic_id):
+			return cosmetic.type
+
+	# vanilla cosmetics
+	if cosmetic_id in ["beer_hat", "cap_blade", "tophat", "traffic_cone", "maska_helmet", "drill_sgt_hat", "hard_hat", "rubiks_cube"]:
+		return "hat"
+	if (cosmetic_id in ["sunglasses", "reading_glasses"]):
+		return "glasses"
+
+	# fallback.... idfk how it would get to this point, but like... Let's
+	return "hat"
+
+
+func get_gibberish_name(cosmetic_id: String) -> String:
+	# custom cosmetics
+	for cosmetic in customization_assigner.custom_cosmetics:
+		if (cosmetic.id == cosmetic_id):
 			return cosmetic.gibberish_name
 
-	match _str:
-		"none":
-			return "none"
-		"beer_hat":
-			return "0010043"
-		"cap_blade":
-			return "0010045"
-		"sunglasses":
-			return "0010046"
-		"reading_glasses":
-			return "0010047"
-		"tophat":
-			return "0010048"
-		"traffic_cone":
-			return "0010049"
-		"maska_helmet":
-			return "0010050"
-		"drill_sgt_hat":
-			return "0010051"
-		"hard_hat":
-			return "0010052"
-		"red":
-			return "0010053"
-		"blue":
-			return "0010054"
-		"green":
-			return "0010055"
-		"yellow":
-			return "0010056"
-		"purple":
-			return "0010057"
-	return "--"
+	# special case for rubiks_cube
+	if (cosmetic_id == "rubiks_cube"):
+		return "0010ERR"
+
+	# vanilla cosmetics
+	return super.get_gibberish_name(cosmetic_id)
