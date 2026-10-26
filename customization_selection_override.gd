@@ -66,12 +66,15 @@ func refresh_cosmetics_grid(up: bool) -> void:
 
 	var start_index: int = (current_page - 1) * 9
 
+	var _debug_items: Array[String] = []
 	for i in range(9):
 		var item_index: int = start_index + i
 
 		if item_index < customization_assigner.custom_cosmetics.size():
-			print("placing item ", item_index)
+			# print("placing item ", item_index)
+			_debug_items.append(customization_assigner.custom_cosmetics[item_index].id)
 			_assign_slot_item(i, customization_assigner.custom_cosmetics[item_index], false)
+	print("grid items: " + ", ".join(_debug_items))
 
 
 func _restore_vanilla_grid() -> void:
@@ -103,7 +106,8 @@ func select_cosmetic(cosmetic_name: String) -> void:
 	# Equip the selected cosmetic.
 	if cosmetic_type == "glasses":
 		if not is_compatible_with_glasses(Globals.active_cosmetic_hat):
-			return
+			customization_assigner.remove_hat()
+			Globals.active_cosmetic_hat = ""
 
 		customization_assigner.assign_glasses(cosmetic_name)
 		Globals.active_cosmetic_glasses = cosmetic_name
@@ -151,31 +155,23 @@ func _get_cosmetic_type(cosmetic_id: String) -> String:
 	if cosmetic_id in ["sunglasses", "reading_glasses"]:
 		return "glasses"
 
-	if cosmetic_id in [
-		"beer_hat",
-		"cap_blade",
-		"tophat",
-		"traffic_cone",
-		"maska_helmet",
-		"drill_sgt_hat",
-		"hard_hat",
-	]:
+	if cosmetic_id in ["beer_hat", "cap_blade", "tophat", "traffic_cone", "maska_helmet", "drill_sgt_hat", "hard_hat"]:
 		return "hat"
 
 	return ""
 
 
 func _clear_all_slots():
-	print("clearing cosmetics grid")
+	# print("clearing cosmetics grid")
 	for i in range(9):
 		selection_rect_array[i].get_parent().hide()
 
 
 func _assign_slot_item(slot: int, cosmetic: Dictionary, is_vanilla: bool):
-	if (cosmetic.id == ""):
+	"""if (cosmetic.id == ""):
 		print("emptying slot ", slot)
 	else:
-		print("assigning item " + cosmetic.id + " to slot ", slot)
+		print("assigning item " + cosmetic.id + " to slot ", slot)"""
 	var preview: Customization_SelectionInstance = cosmetic_selection_parent.get_child(slot)
 	if (is_vanilla):
 		preview.setup_cosmetic(VANILLA_COSMETICS[slot])

@@ -5,7 +5,7 @@ const MOD_ID := "cosmeticsMod"
 
 func _ready() -> void:
 	super._ready()
-	print("customization selection instance override active")
+	# print("customization selection instance override active")
 
 
 # hide every cosmetic in the slot except for the assigned cosmetic
