@@ -23,6 +23,7 @@ cool_hat.json:
 	"type": "hat",
 	"display_name": "Very Cool Hat",
 	"gibberish_name": "0020069",
+	"compatible_with_glasses": true,
 	"transform_values": {
 		"position": [
 			0.0,
@@ -48,6 +49,7 @@ cool_hat - internal id of the cosmetic
 "display_name" (string) - for displaying the name of the cosmetic in menus and stuff instead of the id
 "gibberish_name" (string) - displayed in the cosmetic selection menu when you hover/select the cosmetic
 					* 00200xx is my suggested custom cosmetic gibberish naming convention, but you can make it any string you like. just bear in mind the location it is displayed in.
+"compatible_with_glasses" (bool) - self explanatory
 "transform_values" - self explanatory. these get applied directly to the model ingame.
 					- can contain "position", "rotation_degrees" and "scale". these can be either a single number (int or float) (for example - "scale": 1) or an array of up to 3 numbers, corresponding to the x, y and z coordinates of the transform.
 					* (not yet implemented) you can use the editor in the cosmetics menu to adjust the cosmetic's transform values
@@ -56,6 +58,7 @@ the .json can be missing any of the fields. this will result in default values b
 	"type": "hat"
 	"display_name": the cosmetic's id
 	"gibberish_name": default gibberish value
+	"compatible_with_glasses": true
 	"transform_values": Vector3.ZERO for "position" and "rotation_degrees" and Vector3.ONE for "scale"
 		* "transform_values" will not be defaulted right away when loading the cosmetic, instead later, when attempting to apply the transforms
 
