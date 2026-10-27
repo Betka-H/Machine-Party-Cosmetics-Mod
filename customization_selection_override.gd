@@ -165,7 +165,7 @@ func select_cosmetic(cosmetic_name: String) -> void:
 	# equipping the selected cosmetic and handling glasses compatibility
 	match cosmetic_type:
 		"hat":
-			if (!is_compatible_with_glasses(cosmetic_name)):
+			if (Globals.active_cosmetic_glasses != "" && !is_compatible_with_glasses(cosmetic_name)):
 				deselect_glasses()
 
 			customization_assigner.assign_hat(cosmetic_name)
