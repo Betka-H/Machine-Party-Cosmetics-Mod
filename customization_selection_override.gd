@@ -4,8 +4,9 @@ const MOD_ID := "cosmeticsMod"
 
 const REFRESH_CUSTOM_COSMETICS_KEY := KEY_R
 const PAGE_HOME_KEY := KEY_W
-const PAGE_UP_KEY := KEY_E
-const PAGE_DOWN_KEY := KEY_Q
+const PAGE_UP_KEY := KEY_Q
+const PAGE_DOWN_KEY := KEY_A
+const EDIT_MODE_KEY := KEY_E
 
 var current_page := 1
 var total_pages := 1
@@ -29,6 +30,20 @@ enum NavigationDirection {
 	REFRESH_CURRENT,
 }
 
+# animation of the camera flying around the character
+@onready var camera_animation: AnimationPlayer = \
+cam_parent.get_node("anim_camera movement")
+
+var is_in_edit_mode: bool = false
+
+
+func enter_edit_mode() -> void:
+	camera_animation.pause()
+
+
+func exit_edit_mode() -> void:
+	camera_animation.play()
+
 
 func _ready() -> void:
 	super._ready()
@@ -48,6 +63,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		if (event.keycode == REFRESH_CUSTOM_COSMETICS_KEY):
 			customization_assigner.refresh_custom_cosmetics_on_head_bones()
 			refresh_cosmetics_grid(NavigationDirection.REFRESH_CURRENT)
+		if (event.keycode == EDIT_MODE_KEY):
+			if (is_in_edit_mode):
+				exit_edit_mode()
+			else:
+				enter_edit_mode()
+			is_in_edit_mode = !is_in_edit_mode
 
 		# get_viewport().set_input_as_handled()
 		return
@@ -86,7 +107,7 @@ func refresh_cosmetics_grid(direction: NavigationDirection) -> void:
 
 	print("refreshing cosmetics grid, page ", current_page, "/", total_pages)
 
-	_clear_all_slots()
+	_hide_all_slots()
 
 	if current_page == 1:
 		_restore_vanilla_grid()
@@ -106,7 +127,7 @@ func refresh_cosmetics_grid(direction: NavigationDirection) -> void:
 	print("items: " + ", ".join(debug_items))
 
 
-func _clear_all_slots():
+func _hide_all_slots():
 	for i in range(9):
 		selection_rect_array[i].get_parent().hide()
 
