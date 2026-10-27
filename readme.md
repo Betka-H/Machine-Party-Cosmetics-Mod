@@ -2,15 +2,14 @@
 
 this mod provides the means to add custom cosmetics to the hit game™ machine party.<br>
 it works in online multiplayer, as long as everyone has the mod and the same cosmetics available<br>
-*"same cosmetics available" as in, you obviously won't see other people's cosmetics unless you have these same cosmetics present in your mod. you do not need to have a 100% matching cosmetics list*
+*("same cosmetics available" as in, you obviously won't see other people's cosmetics unless you have these same cosmetics present in your mod. you do not need to have a 100% matching cosmetics list)*
 
 see section "known bugs" below for the current limitations of the mod!<br>
-*tldr; visual bug in online lobby, cosmetics work correctly inside minigames. local lobby unable to be started*
+*(tldr; visual bug in online lobby, cosmetics work correctly inside minigames. local lobby unable to be started)*
 
 # LLM AI usage disclaimer
 
-i have utilised the free ChatGPT model GPT-5.6 Luna in the creation of this mod for the purposes of learning how to mod a godot engine game and for general assistance with code (especially since i am no python/gdscript expert). all of the generated code has been revised and/or modified by me, some of the code has been written from scratch by me.<br>
-this readme was written by me also.
+i have utilised the free ChatGPT model GPT-5.6 Luna in the creation of this mod for the purposes of learning how to mod a godot engine game and for general assistance with code (especially since i am no python/gdscript expert). all of the generated code has been revised and/or modified by me, some of the code has been written from scratch by me. this readme was written by me also.
 
 # mod loader
 
@@ -49,34 +48,22 @@ cool_hat.json:
 }
 ```
 
-cool_hat:
-- internal id of the cosmetic
+cool_hat: internal id of the cosmetic<br>
+"type" (string): can be either "hat" or "glasses"<br>
+"display_name" (string): for displaying the name of the cosmetic in menus and stuff instead of the id<br>
+"gibberish_name" (string): displayed in the cosmetic selection menu when you hover/select the cosmetic<br>
+*(00200xx is my suggested custom cosmetic gibberish naming convention, but you can make it any string you like. just bear in mind the location it is displayed in.)*<br>
+"compatible_with_glasses" (bool): self explanatory<br>
+"transform_values": self explanatory. these get applied directly to the model ingame. can contain "position", "rotation_degrees" and "scale". these can be either a single number (int or float) (for example - "scale": 1) or an array of up to 3 numbers, corresponding to the x, y and z coordinates of the transform.<br>
+*((not yet implemented) you can use the editor in the cosmetics menu to adjust the cosmetic's transform values)*
 
-"type" (string):
-- can be either "hat" or "glasses"
-
-"display_name" (string):
-- for displaying the name of the cosmetic in menus and stuff instead of the id
-
-"gibberish_name" (string):
-- displayed in the cosmetic selection menu when you hover/select the cosmetic
-	- *00200xx is my suggested custom cosmetic gibberish naming convention, but you can make it any string you like. just bear in mind the location it is displayed in.*
-
-"compatible_with_glasses" (bool):
-- self explanatory
-
-"transform_values":
-- self explanatory. these get applied directly to the model ingame.
-- can contain "position", "rotation_degrees" and "scale". these can be either a single number (int or float) (for example - "scale": 1) or an array of up to 3 numbers, corresponding to the x, y and z coordinates of the transform.
-	- *(not yet implemented) you can use the editor in the cosmetics menu to adjust the cosmetic's transform values*
-
-the .json can be missing any of the fields. this will result in default values being assigned for the missing fields:
-- "type": "hat"
-- "display_name": the cosmetic's id
-- "gibberish_name": default gibberish value
-- "compatible_with_glasses": true
-- "transform_values": Vector3.ZERO for "position" and "rotation_degrees" and Vector3.ONE for "scale"
-	- *"transform_values" will not be defaulted right away when loading the cosmetic, instead later, when attempting to apply the transforms*
+the .json can be missing any of the fields. this will result in default values being assigned for the missing fields:<br>
+"type": "hat"<br>
+"display_name": the cosmetic's id<br>
+"gibberish_name": default gibberish value<br>
+"compatible_with_glasses": true<br>
+"transform_values": Vector3.ZERO for "position" and "rotation_degrees" and Vector3.ONE for "scale"<br>
+*("transform_values" will not be defaulted right away when loading the cosmetic, instead later, when attempting to apply the transforms)*
 
 -----
 
@@ -109,15 +96,15 @@ as you can see, there are now two cosmetics with the same id (cool_hat). this wi
 
 # navigating the new cosmetics menu
 
-there is no clickable ui, YET<br>
-for now, you can switch pages by pressing "Q" or "E" to navigate left and right<br>
-you can also press "R" to reload the available cosmetics
+there is no clickable ui, YET. for now, you can switch pages by pressing "Q" or "E" to navigate left and right. you can also press "R" to reload the cosmetics
 
 # known bugs
 
 there are known bugs in both online and local lobbies/waiting rooms:
-- online lobby: everyone will be wearing the same outfit, dictated by each client's selected cosmetics. this is only the case inside the lobby, and the cosmetics are displayed correctly inside minigames (or at least they should be - i did not test every minigame (yet))
-- local lobby: for some reason unknown and very mysterious to me, the name and cosmetics selection in the local lobby is skipped completely, and the game cannot be started at all. remove this mod if you wish to play local
+
+online lobby: everyone will be wearing the same outfit, dictated by each client's selected cosmetics. this is only the case inside the lobby, and the cosmetics are displayed correctly inside minigames (or at least they should be - i did not test every minigame (yet))
+
+local lobby: for some reason unknown and very mysterious to me, the name and cosmetics selection in the local lobby is skipped completely, and the game cannot be started at all. remove this mod if you wish to play local
 
 # to do list
 
