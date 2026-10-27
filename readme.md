@@ -2,7 +2,7 @@
 
 this mod provides the means to add custom cosmetics to the hit game™ machine party.
 
-at the moment, it only includes a few cosemtics meant for testing. see section "adding new cosmetics" for a simple guide on how to add your own models to the game
+at the moment, the mod only includes a few cosmetics meant for testing. see section "adding new cosmetics" for a simple guide on how to add your own models to the game
 
 it works in online multiplayer, as long as everyone has the mod and the same cosmetics available<br>
 *("same cosmetics available" as in, you obviously won't see other people's cosmetics unless you have these same cosmetics present in your mod. you do not need to have a 100% matching cosmetics list)*
