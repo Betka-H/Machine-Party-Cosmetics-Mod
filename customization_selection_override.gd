@@ -30,48 +30,144 @@ enum NavigationDirection {
 	REFRESH_CURRENT,
 }
 
-# animation of the camera flying around the character
-@onready var camera_animation: AnimationPlayer = \
-cam_parent.get_node("anim_camera movement")
-
 var is_in_edit_mode: bool = false
 
+# animation of the camera flying around the character
+@onready var silly_ahh_camera_animation: AnimationPlayer = cam_parent.get_node("anim_camera movement")
 
-func enter_edit_mode() -> void:
-	camera_animation.pause()
+# camera look_at pivot: a bit under the hat bone
+@onready var pivot: Vector3 = customization_assigner.bone_attachment_hat.global_position + Vector3(0, -0.25, 0)
 
+const MOUSE_SENSITIVITY := 0.005
+var is_dragging_camera := false
 
-func exit_edit_mode() -> void:
-	camera_animation.play()
+const EDITOR_CAMERA_ZOOM_STEP := 0.5
+const EDITOR_CAMERA_DEFAULT_ZOOM := 1.2
+const EDITOR_CAMERA_MIN_ZOOM := 0.5
+const EDITOR_CAMERA_MAX_ZOOM := 2.5
+const EDITOR_CAMERA_MIN_PITCH := -75.0
+const EDITOR_CAMERA_MAX_PITCH := 75.0
+
+# starting offset of the camera when entering edit mode
+@onready var editor_camera_start_offset: Vector3 = cam_parent.global_position - pivot
 
 
 func _ready() -> void:
 	super._ready()
+
 	print("\ncustomization selection override active")
+
 	customization_hovered("") # sets the "KL_RUID" to be "--" when first entering the cosmetics menu
 	refresh_cosmetics_grid(NavigationDirection.HOME)
 
 
+func _input(event: InputEvent) -> void:
+	if (is_in_edit_mode):
+		_handle_camera_rotation_and_zoom(event)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if (event is InputEventKey && event.pressed && !event.echo):
-		if (event.keycode == PAGE_HOME_KEY):
-			refresh_cosmetics_grid(NavigationDirection.HOME)
-		if (event.keycode == PAGE_UP_KEY):
-			refresh_cosmetics_grid(NavigationDirection.UP)
-		if (event.keycode == PAGE_DOWN_KEY):
-			refresh_cosmetics_grid(NavigationDirection.DOWN)
+		if (event.keycode == EDIT_MODE_KEY):
+			_handle_toggling_edit_mode()
+
+		# special case for refreshing the cosmetic while in edit mode (well, it also goes through outside of edit mode)
 		if (event.keycode == REFRESH_CUSTOM_COSMETICS_KEY):
 			customization_assigner.refresh_custom_cosmetics_on_head_bones()
-			refresh_cosmetics_grid(NavigationDirection.REFRESH_CURRENT)
-		if (event.keycode == EDIT_MODE_KEY):
-			if (is_in_edit_mode):
-				exit_edit_mode()
-			else:
-				enter_edit_mode()
-			is_in_edit_mode = !is_in_edit_mode
+
+		if (!is_in_edit_mode):
+			_handle_page_navigation(event)
 
 		# get_viewport().set_input_as_handled()
 		return
+
+
+func _handle_toggling_edit_mode():
+	if (is_in_edit_mode):
+		exit_edit_mode()
+	else:
+		enter_edit_mode()
+	is_in_edit_mode = !is_in_edit_mode
+
+
+"""
+
+edit mode camera stuff
+
+"""
+
+var last_mouse_position := Vector2.ZERO
+
+
+func _handle_camera_rotation_and_zoom(event: InputEvent):
+	if (event is InputEventMouseButton):
+		# if starting to hold down the left button; start dragging camera
+		if (event.button_index == MOUSE_BUTTON_LEFT):
+			is_dragging_camera = event.pressed
+			last_mouse_position = event.position
+		# if scrolling; zoom the camera in/out
+		elif (event.button_index == MOUSE_BUTTON_WHEEL_UP && event.pressed):
+			zoom_camera(-1.0)
+		elif (event.button_index == MOUSE_BUTTON_WHEEL_DOWN && event.pressed):
+			zoom_camera(1.0)
+	# if dragging the camera; rotate the camera around the pivot
+	elif (event is InputEventMouseMotion && is_dragging_camera):
+		var mouse_event := event as InputEventMouseMotion
+		rotate_camera_around_pivot(mouse_event.position - last_mouse_position as Vector2)
+		last_mouse_position = mouse_event.position
+
+
+func zoom_camera(direction: float) -> void:
+	var offset := cam_parent.global_position - pivot
+
+	cam_parent.global_position = pivot + offset.normalized() * clamp(
+		offset.length() + direction * EDITOR_CAMERA_ZOOM_STEP,
+		EDITOR_CAMERA_MIN_ZOOM,
+		EDITOR_CAMERA_MAX_ZOOM,
+	)
+
+	cam_parent.look_at(pivot, Vector3.UP)
+
+
+# holy shit i dont even know how to begin to dissect this one... sry homie (its me, im homie)
+func rotate_camera_around_pivot(delta: Vector2) -> void:
+	# Horizontal orbit around the world Y axis.
+	var offset := (cam_parent.global_position - pivot).rotated(Vector3.UP, -delta.x * MOUSE_SENSITIVITY)
+
+	# Vertical orbit with pitch limits.
+	var horizontal_length := Vector2(offset.x, offset.z).length()
+	var current_pitch := rad_to_deg(atan2(offset.y, horizontal_length))
+
+	var new_pitch := clamp(current_pitch + delta.y * MOUSE_SENSITIVITY * 180.0 / PI, EDITOR_CAMERA_MIN_PITCH, EDITOR_CAMERA_MAX_PITCH)
+
+	var right := Vector3.UP.cross(offset).normalized()
+
+	if right.length_squared() > 0.001:
+		var pitch_change := deg_to_rad(new_pitch - current_pitch)
+		offset = offset.rotated(right, -pitch_change)
+
+	cam_parent.global_position = pivot + offset
+	cam_parent.look_at(pivot, Vector3.UP)
+
+
+# hide item grid, pause camera animation and set the camera to the default editor position
+func enter_edit_mode() -> void:
+	print("entering cosmetic edit mode")
+	_hide_all_slots()
+	silly_ahh_camera_animation.pause()
+	set_edit_camera_to_default_position()
+
+
+# enable item grid again and continue camera animation
+func exit_edit_mode() -> void:
+	print("exiting cosmetic edit mode")
+	refresh_cosmetics_grid(NavigationDirection.REFRESH_CURRENT)
+	silly_ahh_camera_animation.play("move", 0.0, 1.0, false)
+
+
+func set_edit_camera_to_default_position() -> void:
+	cam_parent.global_position = pivot + editor_camera_start_offset.normalized() * EDITOR_CAMERA_DEFAULT_ZOOM
+	cam_parent.look_at(pivot, Vector3.UP)
 
 
 """
@@ -79,6 +175,17 @@ func _unhandled_input(event: InputEvent) -> void:
 the cosmetics grid + page navigation
 
 """
+
+
+func _handle_page_navigation(event: InputEvent):
+	if (event.keycode == PAGE_HOME_KEY):
+		refresh_cosmetics_grid(NavigationDirection.HOME)
+	if (event.keycode == PAGE_UP_KEY):
+		refresh_cosmetics_grid(NavigationDirection.UP)
+	if (event.keycode == PAGE_DOWN_KEY):
+		refresh_cosmetics_grid(NavigationDirection.DOWN)
+	if (event.keycode == REFRESH_CUSTOM_COSMETICS_KEY):
+		refresh_cosmetics_grid(NavigationDirection.REFRESH_CURRENT)
 
 
 func refresh_cosmetics_grid(direction: NavigationDirection) -> void:
@@ -209,11 +316,20 @@ func deselect_glasses():
 	Globals.active_cosmetic_glasses = ""
 
 
-"""
+func _get_cosmetic_type(cosmetic_id: String) -> String:
+	# custom cosmetics
+	for cosmetic in customization_assigner.custom_cosmetics:
+		if (cosmetic.id == cosmetic_id):
+			return cosmetic.type
 
-misc
+	# vanilla cosmetics
+	if cosmetic_id in ["beer_hat", "cap_blade", "tophat", "traffic_cone", "maska_helmet", "drill_sgt_hat", "hard_hat", "rubiks_cube"]:
+		return "hat"
+	if (cosmetic_id in ["sunglasses", "reading_glasses"]):
+		return "glasses"
 
-"""
+	# fallback.... idfk how it would get to this point, but like... Let's
+	return "hat"
 
 
 func is_compatible_with_glasses(cosmetic_name: String) -> bool:
@@ -235,20 +351,11 @@ func is_compatible_with_glasses(cosmetic_name: String) -> bool:
 	return true
 
 
-func _get_cosmetic_type(cosmetic_id: String) -> String:
-	# custom cosmetics
-	for cosmetic in customization_assigner.custom_cosmetics:
-		if (cosmetic.id == cosmetic_id):
-			return cosmetic.type
+"""
 
-	# vanilla cosmetics
-	if cosmetic_id in ["beer_hat", "cap_blade", "tophat", "traffic_cone", "maska_helmet", "drill_sgt_hat", "hard_hat", "rubiks_cube"]:
-		return "hat"
-	if (cosmetic_id in ["sunglasses", "reading_glasses"]):
-		return "glasses"
+misc
 
-	# fallback.... idfk how it would get to this point, but like... Let's
-	return "hat"
+"""
 
 
 func get_gibberish_name(cosmetic_id: String) -> String:

@@ -94,22 +94,22 @@ func remove_outdated_cosmetics(parent_node: Node3D) -> void:
 func add_cosmetic_to_node3d(cosmetic_dictionary: Dictionary, parent_node: Node3D) -> void:
 	# don't add duplicates, but update the transform on reload
 	if parent_node.has_node(NodePath(cosmetic_dictionary.id)):
-		_apply_node3d_transform(parent_node.get_node(NodePath(cosmetic_dictionary.id)), cosmetic_dictionary["transform_values"], true)
+		apply_node3d_transform(parent_node.get_node(NodePath(cosmetic_dictionary.id)), cosmetic_dictionary["transform_values"], true)
 		return
 
-	var model: Node3D = _generate_glb_model_scene(cosmetic_dictionary["absolute_model_path"])
+	var model: Node3D = generate_glb_model_scene(cosmetic_dictionary["absolute_model_path"])
 	if model == null:
 		return
 
 	model.name = cosmetic_dictionary.id
-	_apply_node3d_transform(model, cosmetic_dictionary["transform_values"], true)
+	apply_node3d_transform(model, cosmetic_dictionary["transform_values"], true)
 	parent_node.add_child(model)
 	model.visible = false
 
 	# print("added cosmetic " + cosmetic_dictionary.id + " to parent " + parent_node.name)
 
 
-func _generate_glb_model_scene(absolute_model_path: String) -> Node3D:
+func generate_glb_model_scene(absolute_model_path: String) -> Node3D:
 	var document := GLTFDocument.new()
 	var state := GLTFState.new()
 
@@ -287,13 +287,13 @@ applying node3d transforms
 # "absolute" specifies how to set the object's transform
 # - true: set the object's transform directly to the new values
 # - false: add the new values to the object's current transform
-func _apply_node3d_transform(model_node3d: Node3D, transform_values: Dictionary, absolute: bool) -> void:
+func apply_node3d_transform(model_node3d: Node3D, transform_values: Dictionary, absolute: bool) -> void:
 	"""
 	cases of applying a transform:
 
 		- adding a new model and need to apply one specific transform to it
 			absolute==true:
-			_apply_node3d_transform(model, {"position": [1, 0.5], "rotation_degrees": [0, 90], "scale": 2}, true)
+			apply_node3d_transform(model, {"position": [1, 0.5], "rotation_degrees": [0, 90], "scale": 2}, true)
 			position:
 				set directly.
 				if a value is missing, substitue with 0
@@ -309,7 +309,7 @@ func _apply_node3d_transform(model_node3d: Node3D, transform_values: Dictionary,
 
 		- editing the model in the cosmetics editor
 			absolute==false:
-			_apply_node3d_transform(model, {"position": [1, 0.5], "rotation_degrees": [0, 90], "scale": 2}, false)
+			apply_node3d_transform(model, {"position": [1, 0.5], "rotation_degrees": [0, 90], "scale": 2}, false)
 			position:
 				add to existing position.
 				if a value is missing, substitue with 0
