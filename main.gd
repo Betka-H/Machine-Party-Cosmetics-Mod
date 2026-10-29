@@ -11,6 +11,8 @@ func _full_loader_path(local_path: String) -> String:
 
 func _mod_init(loader) -> void:
 	_loader = loader
+
+	# overrides
 	loader.override_script_rel(
 		MOD_ID,
 		"res://scripts/components/character customization/customization_assigner.gd",
@@ -26,7 +28,11 @@ func _mod_init(loader) -> void:
 		"res://scripts/components/character customization/customization_selection_instance.gd",
 		"customization_selection_instance_override.gd",
 	)
+	# override lobby first before the player controls! reason: ???
+	loader.override_script_rel(MOD_ID, "res://scenes/local_lobby/scripts/local_lobby.gd", "local_lobby_override.gd")
 	loader.override_script_rel(MOD_ID, "res://scenes/local_lobby/scripts/local_lobby_player_controls.gd", "local_lobby_player_controls_override.gd")
+	loader.override_script_rel(MOD_ID, "res://modules/prop_manager/scripts/hat_gib_prop.gd", "hat_gib_prop_override.gd")
+
 	loader.note("cosmetics mod initialised. scripts overriden")
 
 
