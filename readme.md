@@ -115,5 +115,4 @@ TODO: cosmetics menu UI<br>
 TODO: implement cosmetic transform editor<br>
 TODO: add in-game debug messages for cosmetics errors<br>
 TODO: fix online lobby cosmetics bug<br>
-TODO: fix local lobby being unplayable<br>
 TODO: add "author" field to cosmetic json<br>
