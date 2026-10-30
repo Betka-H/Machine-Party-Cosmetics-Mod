@@ -4,13 +4,13 @@
 	"gibberish_name": "0020048",
 	"transform_values": {
 		"position": [
-			0.0,
-			0.0,
+			-0.03,
+			-0.03,
 			0.0
 		],
 		"rotation_degrees": [
 			0.0,
-			0.0,
+			-90.0,
 			0.0
 		],
 		"scale": [
